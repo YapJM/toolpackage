@@ -15,3 +15,6 @@ Go into the toolpackage directory via terminal and run the command:
 Go into the toolpackage directory via terminal and run the command:
 
 `git push origin main`
+
+
+Password: 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
