@@ -14,7 +14,13 @@ Go into the toolpackage directory via terminal and run the command:
 ## Pushing any code changes to the main repository
 Go into the toolpackage directory via terminal and run the command:
 
+For individual files: `git commit <FILENAME>`
+
+For all files: `git commit -a`
+
+then push to repository with:
+
 `git push origin main`
 
 
-Password: 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
+Password: `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`
