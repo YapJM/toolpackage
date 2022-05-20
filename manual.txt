@@ -1,0 +1,556 @@
+header:
+	**************************************************
+	*	important parameter and pointer	*
+	**************************************************
+
+	int sptrFW = 36000;  // full spectrum width (ns)
+	int binsfuspectrum = 10000;  // bins
+	int singleHalfwidth = 150;  // ns half spectrum width of ref histo
+	int bins_refS = 200;		// bins
+	int bins_nevt = 200;		// bins 2D histo X axis
+
+	int TagBit0 = 0; // using to reverse the eje time read from .lst to get proper preview
+	int TagBit1 = 1;
+
+
+	Time of flight container:
+	double tof_ref_cento=0;        double  tof_ref_cento_err=0;       // contain tof input from labview calculator or fit tof result !!!!!!!!
+	double tof_x_cento[10]={0};     double  tof_x_cento_err[10]={0};   // contain tof fit result of x peak !!!!!!!!!!!!!
+
+
+	Basic Histogram:
+	TH1D *h_xF = NULL;   // x ion full spectrum
+	TH1D *h_refF=NULL;   // ref ion full spectrum
+	TH1D *h_refS=NULL;   // ref ion single spectrum
+	TH2D *h_ref2D=NULL;  // ref ion 2D spectrum
+
+	TH1D *h_zoom_ref=NULL;
+	TH1D *h_zoom_x = NULL;
+
+
+	Key Parameters:
+	double t0 = 0.05;   double err_t0 = 10;// ns
+	const double m_ele = 548.58 ; const double err_me = 0.003;  // unit micro_u electron mass
+	double m_ref = 132905451.961;  double err_ref = 0.009;    // unit micro_u  133Cs reference mass
+	int q_ref = 1;     // charge
+	const double bref=33256.31; // b value
+	int laps_ref = 600;
+	const double KEV90 = 0.93149410242; const double err_KEV90 = 0.00028*1e-6;
+
+<end>
+
+
+define ion:
+	**************************************************
+	*	     how to define ions         	*
+	**************************************************
+	
+	Ion constructor:
+	Ion(string formula,int _charge=1,double _tof=0, double _tof_err=0,int _counts=0)
+
+	OR
+
+	Ion(double _mass=0, double _mass_err=0,int _charge=1,double _tof=0, double _tof_err=0, const char* _name = NULL,int _counts=0)
+
+<end>
+
+
+display:
+	**************************************************
+	*  change the initial display of histogram *
+	**************************************************
+
+	Basic Histogram:
+	TH1D *h_xF = NULL;   // x ion full spectrum
+	TH1D *h_refF=NULL;   // ref ion full spectrum
+	TH1D *h_refS=NULL;   // ref ion single spectrum
+	TH2D *h_ref2D=NULL;  // ref ion 2D spectrum
+
+
+	function:
+	void para_modifier(int FullWidth_ns = 36000,int binsFW = 10000,int refHalfWidth_ns = 150,int bins_refSingle=200,int bins_event=100);
+	//   width of full spectrum , bins of full spectrum , half width of ref spectrum from centro , bins of ref zoom in histo , bins of event in 2D
+
+	void ReverseEjeTime(); // to reverse tag display; then run preview(xxx) again;
+
+
+	**************************************************
+	*		Zoom in histogram	     	 *
+	**************************************************
+
+	Basic Histogram:
+	TH1D *h_zoom_ref=NULL;
+	TH1D *h_zoom_x = NULL;
+
+	function:
+	void histo_zoom_in_ref(int bins =0,double tof_ref=0,double halfwidth=0, double TAG=1); // can be tag1 or tag0; but only work for spectrum after drift correcton.	
+
+	void histo_zoom_in_x(int tag=0,int bins=0,double histoL=0,double histoR=0); // can be tag1 or tag0; but only work for spectrum after drift correcton.
+
+<end>
+
+
+fitting:
+	**************************************************
+	*	fitting parameter & method		*
+	**************************************************
+
+	Basic Predefined fitting function:
+	Please use fitquickly_func1() to access pure Gausian fit
+	TF1 *gau; // only gaus
+	TF1 *gaus_line; // gaus + linear bg
+
+	%%%%%%%%%%%%% set 1 => Right exp tail %%%%%%%%%
+	TF1 *man1_func1; // 1 gaus_exp func
+	TF1 *man2_func1; // 1 gaus_exp func
+	TF1 *man3_func1; // 1 gaus_exp func
+	TF1 *ml_func1;   // 1 gaus_exp + linearbg func
+	TF1 *mexp_func1; // 1 gaus_exp + expbg func
+	TF1 *multi2_func1; // 2 gaus_exp func
+	TF1 *multi3_func1; // 3 gaus_exp func
+	TF1 *multi2_exp_func1; // 2 gaus_exp + 1 expbg func
+	TF1 *multi2_line_func1;// 2 gaus_exp + 1 linebg func
+
+	%%%%%%%%%%%%%% set 2 => Right + Left exp tail %%%%%%
+	TF1 *man1_func2; // 1 gaus_exp func
+	TF1 *man2_func2; // 1 gaus_exp func
+	TF1 *man3_func2; // 1 gaus_exp func
+	TF1 *ml_func2;   // 1 gaus_exp + linearbg func
+	TF1 *mexp_func2; // 1 gaus_exp + expbg func
+	TF1 *multi2_func2; // 2 gaus_exp func
+	TF1 *multi3_func2; // 3 gaus_exp func
+	TF1 *multi2_exp_func2; // 2 gaus_exp + 1 expbg func
+	TF1 *multi2_line_func2;// 2 gaus_exp + 1 linebg func
+ 
+	%%%%%%%%%%%%%% global fitting function handler %%%%%%
+	TF1 *tem_func;  // alway point to current fitting function
+	
+
+	%%%%%%%%%%%%%%% History container %%%%%%%%%%%%%%%%%%%%
+	DefGeneralFunc *FHistory[30]  // 30 maximum history record
+
+
+
+	function:
+	%%%%%%%%%%%%%% pure gaus or gaus + right tail fitting %%%%%%
+	void fitquickly_func1(char whichhisto='x',Option_t *Fitoption = "ME", bool FitAgain=false, double _RangeL=-1, double _RangeR=-1);
+
+	%%%%%%%%%%%%%% gaus + right & left tail fitting %%%%%%
+	void fitquickly_func2(char whichhisto='x',Option_t *Fitoption = "ME", bool FitAgain=false, double _RangeL=-1, double _RangeR=-1);
+
+	
+	void fitquickly(char whichhisto,int func1ORfunc2,Option_t *Fitoption, bool FitAgain, double _RangeL, double _RangeR,int N_loop); // func1ORfunc2 => 1: gaus or guas+ right exp; 2: gaus + right & left exp
+
+	warning: paralock is unavailable when using fitquickly() to fit multipole peaks. Please use fitgeneralcurve() as follow
+
+	void fitgeneralcurve(char whichhisto,int func1ORfunc2, int NumPeaks2Fit, int whichbackground, int Index_MainPeak,bool _ParasLock,Option_t *Fitoption, bool FitAgain, double _RangeL, double _RangeR) // ('x/r', 0=>gaus 1=>gaus+right_exp or 2=> gaus + right_left_exp , N>=1 , 0=>no bg 1=>linear bg or 2=>exp bg, index from 1, true/false, "LMEQ" , true/false , double, double)
+
+	void ReleasePar() // release parameters for predefined fitting function
+
+	void savefile_current_fitparas(const char* Note, bool NewIndex)  //give it a name and whether to reset index to 1 in case of a new file
+
+	void readfile_fitparas_history(int recordIndex_low=1,int recordIndex_high=0)  //recordIndex_high=0 => readout all // only readout record between low and high; read into FHistory[];
+
+
+	void fitlooping(Option_t *Fitoption="MEQ",int loopNum=50, double newRangeL=0,double newRangeR=0, bool fixpars=true) // true => keep default setting; BUT false ==> release paras
+
+	void fithistory(DefGeneralFunc* inhistory, bool fixpars=true) // RELY ON fitlooping() ; it can load the info of FHistory[] to global; fixpars= true ==> fix paras of tail read from file; false ==> release paras and fit.
+
+
+	**************************************************
+	*	How to fit again by using history	*
+	**************************************************
+	trick: fitagain ==> 0. read history  1. .L batchfitagain.C+ 2.batchfitagain(int NumofIon,const char* RefName) ==>(N,"Rb"): fit from FHistory[0~N-1] using Rb as reference to determine the shape. 3. ->GetTFunc() to access paras
+
+
+
+		%%%%%% get mass resolving power
+	func1(func2)::
+	Double_t Rm_cal(TF1* inputline, int peaknum_index = 1)	
+
+	procedure:
+	1. fit reference peak; make sure all parameters are free.
+		especially under interaction mode using hot key 'f'. Because this mode use current fitting function setting only. To release parameter => ReleasePar()
+	2. fix parameter
+
+		double siga,tailL,tailR;
+
+		siga = tem_func->GetParameter(2);
+		tailR = tem_func->GetParameter(3);
+		tailL = tem_func->GetParameter(4);
+
+		tem_func->FixParameter(2,siga);
+		tem_func->FixParameter(3,tailR);
+		tem_func->FixParameter(4,tailL);
+
+	 3. fit other peaks
+		use fitquickly option fitagain or 'f' under interaction mode
+
+	especially fitting with sample function:
+	1. press 's' to sample at tag1 (pad 4) by draw arrow afterward; or make time cut at pad2 first then press 'S' to sample at tag0
+	2. press 'f' to fit;
+	3. ',' can free fitting range
+
+<end>
+
+
+mass searcher & mass calculate:
+	**************************************************
+	*		mass calculator			*
+	**************************************************
+
+
+	function:
+	%%%%%%%%%% current global reference; show mass at different laps and charge state
+	void mass_calculator(int Peak1OrPeak2) // up to 10 actually
+
+	%%%%%%%%%% any single reference; show mass at different laps and different charge state
+	void mass_calculator(double tof0,double tof0_err,double tof_ref,double tof_ref_err,int _laps_ref, double mass_ref, double mass_ref_err,double b_ref,int _q_ref)
+
+	%%%%%%%%%%% any single reference; show mass at given laps and charge state
+	double * mass_calculator(double tof0,double tof0_err,int _laps_x, int q_x, double tof_ref,double tof_ref_err,int _laps_ref, double mass_ref, double mass_ref_err,double b_ref,int _q_ref)
+
+	%%%%%%%%%%% multi reference; mass of X @ the same laps as reference
+	double * mass_calculator(double tof0,double tof0_err,int q_x, Ion *RefIon, int Num_RefIons)
+
+
+
+	**************************************************
+	*		mass searcher			*
+	**************************************************
+	# include "preview1.h"
+	Double_t* SearchAME(int Anum = 0, const char* element = "", bool verbose = false, const char* filename = "AME2020.txt"); // can change to AME2016 by enable #define AME2016 in preview1.h;
+
+	Double_t* SearchMolMass(string formula = "12C;1 16Cl;4"); // rely on SearchAME();
+
+	Double_t* SearchEleByMass(double mass_input = 0, const char* filename = "AME2020.txt") // again #define AME2016 ==> change database in code; return the most closest mass
+
+<end>
+
+
+
+setting of ref or X:
+	**************************************************
+	*		Ref setting				*
+	**************************************************
+
+	%%%%%%%%% print information of time and mass %%%%%%%
+	void PrintInfo();
+
+	Basic container:
+		double m_ref
+		double err_ref
+		int q_ref
+		int laps_ref
+		double tof_ref_cento
+		double tof_ref_cento_err
+
+
+	function:
+	void ResetRef(double mass_ref,double mass_ref_err,int _qref,int _laps_ref,double tofref,double tofref_err)
+
+	void ResetRefMassTime(int Anum, const char* elename, int _qref,int _laps_ref,double tofref,double tofref_err)
+	
+	**************************************************
+	*		change TOF of X ion		*
+	**************************************************
+
+	function:
+	%%%%%%% input any TOF to calculate mass %%%%%%
+	void ResetX(int Peak1OrPeak2 , double tofx, double tofx_err)
+
+<end>
+
+
+Mark TOF and ROI:
+	**************************************************
+	*			TOF marker			*
+	**************************************************
+
+	Basic container:
+	TOFMarker* marker_tof = new TOFMarker[40]; // 20 markers at most
+
+	function:
+	void MarkTof(double mass_xx , int q_x, const char* IonName,int _laps_x,int Tag,bool renew_current,bool renew_all)
+		
+
+	void MarkTof(int Anum,const char* EleName, int q_x,int _laps_x, int Tag, bool renew_current, bool renew_all)
+
+	void MarkTof(string formula, int q_x,int _laps_x, int Tag, bool renew_current, bool renew_all)
+
+	void saveTOFMarker(bool AddMode,int toMaxIndex_19=-1)  // save to maximum index=19 (20 in total); default works well
+
+	void readfile_TOFMarker(int N_terms_skip=0) // skip the first N lines
+
+	trick: _laps_x=0 => same laps as reference; _laps_x=-1 => searching at range: [laps_ref-50,laps_ref+50]
+
+
+
+	**************************************************
+	*			Setting ROI			*
+	**************************************************
+
+	Basic container:
+	%%%%%% maximum ROI number = 40 %%%%%%%
+	TLine * ROIL = new TLine[40];
+	TLine * ROIR = new TLine[40];
+	TLatex * ROI_label = new TLatex[40];
+
+	double gXposition=0;  // to get tof of cursor by double click
+	double ROI_WIDTH =30;
+	int ROI_INDEX =1;    // begin from 1
+	bool ROI_initial=false;
+
+
+	function:
+	void SetROI(double TCento, double ROI_width , int ROI_index , double TOffset, bool showcount)  // real center= TCento + TOffset; show counts in ROI
+
+	void SetMassROI(double _massxx,int q_x, int ROI_index, double TOffset, double ROI_width, bool showcount)
+
+	void SetEleROI(int Anum,const char *element, int q_x, int ROI_index, double TOffset, double ROI_width, bool showcount)
+
+	warning: ROI calculated by mass basing on laps of Ref; draw in cd(1) only
+
+	trick: under interaction mode, double click the peak center, press 'r' => new ROI ; 'R'=> modify current ROI ; Reset All ROI by "ROI_INDEX =1";  set ROI_WIDTH   directly to change ROI width
+	
+
+<end>
+
+multicurves class:
+	**************************************************
+	*		Structure and method		*
+	**************************************************
+
+class SubTFPackage;
+
+class DefGeneralFunc{
+	friend class SubTFPackage;
+	public:
+		static int GloIndex;
+		static double normalize_factor; // area of strongest peak!!!!!!!!!  for subline normalize
+		char * name;
+		char * Date;
+		int SetOneorTwo;   // 0 = pure gaus;  1 = func1 (gauss + exp Right tail) ; 2 = func2 (gauss + exp Ritht and Left tail)
+		int NumOfPeaks;    // at least 1 peak
+		int BackGroundCurve;  // 0 = no background, 1 = linear; 2 = expotential
+		int MainPeakIndex;
+		bool ParasLock;
+		double* TFParameters;
+		TF1 * TFunc;
+		
+		int NumOfPars;  // how many paras for TF
+		int TAG;
+		double fitRangeL;
+		double fitRangeR;
+		int histo_nbins;
+		double histo_L;
+		double histo_R;
+		double histo_bin_width;
+
+		//&&&&&&&&&&&&&&   start of definition of class SubTGPackage  &&&&&&&&&&&&&&&&
+		class SubTFPackage{
+			friend class DefGeneralFunc;
+			public:
+				TF1 * subTF;
+				TLatex *subTFLable[2]; // [0]: peak index; [1] intensity(peak area);
+				TLine *subTFCenterLine;
+				double subTFIntensity;
+				int subTFIndex;
+				Int_t kala[7];
+
+		double Integral(double &LeftEdge,double &RightEdge,double _binwidth)
+		SubTFPackage(const char* _name,int _SetOneorTwo, double *TFpars,double _binwidth)
+		void Draw(bool _showintens)
+		}; 
+			//end of definition of class SubTFPackage
+
+
+		SubTFPackage ** SubTF;
+		%%%%%%%%%%% draw sub TF & setting intensity display %%%%%%%
+		void DrawSubTF(bool showintens=true);
+		void SetName(const char* _name);
+		DefGeneralFunc();
+		DefGeneralFunc(const char* _name,int _tag=0,int _SetOneorTwo=1,int _NumOfPeaks=1,int _BackGroundCurve=0,int _MainPeakIndex=1, bool _ParasLock = true,double* _parameters=NULL,double _fitRangeL=0,double _fitRangeR=0,int _histo_nbins=0,double _histo_L=0,double _histo_R=0,const char* _Date=NULL);
+
+		DefGeneralFunc(TF1* inputTF);
+		bool operator()(TF1* inputTF=NULL)
+		void SetTFPars2Container()
+		void SetContainerPars2TF()
+		%%%% Get the whole function %%%%%%
+		TF1* GetTFunc()
+		void ScalePeaksHigh(double factor)
+		%%%% draw or not draw the sub TF %%%%
+		void Draw(bool ShowSubTF=false)
+
+		trick: DefGeneralFunc kaka; kaka(tem_func) can save the current curve to RAM; FHistory[20] predifine container;
+
+<end>
+
+
+others:
+	**************************************************
+	*		other function			*
+	**************************************************
+	%%%% A mass - B mass %%%%%%%
+	double* ExtractMassDeviate(double mass_A, double mass_err_A,double mass_B, double mass_err_B,bool saveMass,int result_index, const char * Note)  // mass A - mass B
+
+	%%%% uamu to keV && uamu mass to MassExcess  %%%%
+	double* TokeV90(double mass_value,double mass_value_err, bool verbal=true)
+	double* MassExcess(double mass_value,double mass_value_err, bool verbal=true)
+
+	%%%% plut mass deviation plot VS AME value %%%%%%
+	vector<double> PlotMultiMassResult(int NumResult,double* multimass, double* multimass_err, double massAME, double massAME_err,double YMaximum=-1)
+
+
+	%%%% check residue histogram against fitting curve  %%%%
+	void ShowResHisto(TH1D* inhisto=NULL, TF1 * inFunc =NULL,double checkrangeL=-1,double checkrangeR=-1)  // histogram - funcValue
+
+<end>
+
+
+interaction mode:
+	**************************************************
+	*	interaction mode & hot key		*
+	**************************************************
+	
+	Basic container:
+	string AFitOption= "LMEQ";
+	int AFitSetFunc=2;  
+	char AFit_x_r = 'x';
+
+	function:
+	'z','x' => zoom in / zoom out
+	'l' => log or linear scale
+	'space' => new histogram at cd(2)
+	'r','R' => new / modify ROI
+	'f' => fit using current curve tem_func
+	'-' => show time different between two cursor position
+	'c' => make tof-beta coincident matching
+	's'=> draw arrow at pad4 to sample a peak
+	'S'=> to sample a peak in given range at pad2
+	'm'=> calculate mass (using PrintInfo() to confirm laps_x and q_x , can be changed by laps_x=700 , q_x=2)
+
+	double click => show corresponding mass of the position of the cursor // or get a centor for setting ROI
+
+	void StartInteractionMode(int canvasID =0)
+	void StopInteractionMode(int canvasID =0)
+
+<end>
+
+general procedures:
+	**************************************************
+	*	how to use scripts in toolpackage	*
+	**************************************************
+
+	1. creater folder format like: Run192/LST ; Run192/rootfiles.
+		move .lst file and .png file to Run192
+	2. decoder and drift correction
+		.L MassAnaGUI2.cc
+		MassAnaGUI2()
+	3. .L preview3.C+ ==> analyse
+	4. combine tree for degrader scan
+		.L preview3.C+
+		.L CombineTree.C
+		provide peak center of Ref in each spectrum; modify and run 			autorun()
+	5. after combination, suggest to do drift correction again, but it 			has to change "tree" in DriftCorrect.C to "tree0" first
+	6. batch mass calculation
+		.L preview3.C+
+		.L BatchMassCal.C
+		set reference by setting 1 in .txt file
+	7. draw mass of single ion at different files VS AME value
+		.L preview3.C+
+		.L batchplot.C
+
+	 %%%%%%%%%%%% Using input range ; not DrawingBit %%%%%%%%%%%%%%%%
+		void batchplot(string path="../",string filename="not include .txt",double mass_amu=1,double mass_err_amu=1,int indexStart=0,int indexStop=-1,double YMaximum=-1)  // index begins from 0 here;
+
+
+	%%%%%%%%%%%%%%%% Using Drawing Bit %%%%%%%%%%%%%%%%%%%%%%%%
+	%%%%%% can accept both amu or Mass excess in keV as reference value %%%%%%%
+	void batchplot_Bit(string path="../",string filename="not include .txt",double mass_amu=1,double mass_err_amu=1,double YMaximum=-1)  // index begins from 0 here
+
+	trick: when ref in uamu => results shown in uamu; when Ref in keV => results shown in MassExcess. Be careful!!!!  This auto conversion may fail at large mass value.
+
+	8. plot measurements of various species VS AME
+		.L plotdva.C
+
+<end>
+
+
+beta-TOF:
+	**************************************************
+	*	make beta-tof coincidence		*
+	**************************************************
+
+	Basic container:
+	int syn_CH = 4; // beta-tof synchronizer channel
+	Long64_t RIHalflive; // in nano-second
+	TTree* tbeta_beta;  // beta-beta coincidence
+	TTree* tbeta_tof;  // beta-Tof coincidence
+	RejectionList rejectlist;  //reject repeated records
+	double Times2Halflive = 4; // looking for coincident event in 4times halflive
+	TCutG *mycut[5];
+
+	function:
+	void LoadNewBetaFile("name of beta file with .lst");
+	void Read_Beta_lst(string PATH, string filename);//(filepath, filename with .lst)
+	bool Compare_Beta_Beta();
+	bool ShowBeta_Beta_Coin();
+	void ShowEjectionBeta(double ejection0, double ejection1); 
+		//fill as (EJE0,EJE1) predefined variable for the moment of eje at 0 & 1 tag
+ 	void FindBetaTof_Coin(double tof_L, double tof_R, Long64_t _Halflife)
+		// (tof peak left edge, right edge, expected halflife of RI)
+	void ShowDecayHisto(TCutG** usecut=NULL, RejectionList* _rejectlist=NULL)
+	void ScanBetaTof_tree(TCutG** _usecut=NULL, string speciesname="", RejectionList* _rejectlist=NULL,bool IsSave=false, bool IsAdd=true)
+
+	bool MakeCut();
+	bool LoadCut();
+
+class RejectionList{
+	private:
+		vector<Long64_t> tof_gclock;
+		vector<Long64_t> time1_gclock;
+		vector<Long64_t> time2_gclock;
+		int NumofReject;
+
+	public:
+		void Add(Long64_t _tof_gclock , Long64_t _time1_gclock, Long64_t _time2_gclock)
+		void Remove(Long64_t _tof_gclock , Long64_t _time1_gclock, Long64_t _time2_gclock)
+		void Print()
+		bool IsInside(Long64_t _tof_gclock , Long64_t _time1_gclock, Long64_t _time2_gclock)
+		int GetN()
+
+};
+
+
+
+	%%%%%% Set and show beta-beta conditions %%%%%%%%
+
+	void SetBeta_E_Calibrate_para(double _slope1=1,double _intercept1=0,double _slope2=1,double _intercept2=0);
+		// calibration parameters; default: set Energy = ADC
+	void GetBeta_E_Calibrate_para();
+
+	void SetCoinCondition(Long64_t _gate_time=500, int _gate_adc_low=0, int _gate_adc_hi=1000);
+		// ( |beta1-beta2| window as coincident event, E window adc Min, E window adc Max);
+	void ShowCoinCondition();
+
+	void SetRIHalflife(double InMilliSecond = 150); // halflife time unit in ms
+	void SetRIHalflife_byLifeTime(double Inlivetime_ms=150) // unit is ms
+
+
+
+	%%%%%% Set and show beta-tof conditions %%%%%%%%
+
+	rejectlist.Add(Long64_t _tof_gclock , Long64_t _time1_gclock, Long64_t _time2_gclock);
+	rejectlist.Remove(Long64_t _tof_gclock , Long64_t _time1_gclock, Long64_t _time2_gclock);
+	rejectlist.Print();
+
+
+	trick: Under interactive mode ==> 1.LoadNewBetaFile(); 2.SetRIHalflife(); 3.Option {SetCoinCondition();SetBeta_E_Calibrate_para();} just need to set once; 4. cut time windows at Tof spectrum; 5. press 'c' on keyboard 6. MakeCut() at histogram of "beta1_E vs beta2_E" and pads c_eject->cd(1 & 3); 7.ShowDecayHisto(mycut) and ScanBetaTof_tree(mycut) to see raw coincidence; 8. check repeated event add to rejecionlist => rejectlist.Add(global time TOF, global time time1, global time2); 8.ShowDecayHisto(mycut,&rejectlist) and ScanBetaTof_tree(mycut,"ion name",&rejectlist)
+
+<end>
+
+
+
+
+
