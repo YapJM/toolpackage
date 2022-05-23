@@ -1438,13 +1438,13 @@ void preview(string PATH="../rootfiles/",string filename="",char origin_correct=
 	intree->Draw("sweeps_global","","goff");
 	double* getsweeps = intree->GetV1();
 
-	for(long isweeps=0;isweeps<intree->GetSelectedRows();isweeps++){
+	for(long isweeps=0;isweeps<intree->GetSelectedRows() % intree->GetEstimate();isweeps++){
 		if(getsweeps[isweeps]>Maxsweeps_tem) Maxsweeps_tem =getsweeps[isweeps];
 	}
 
 	Maxsweeps=(long)Maxsweeps_tem;
 
-	cout<<"File statics: "<<endl;
+	cout<<"File statistics: "<<endl;
 	cout<<"numofevent = "<<numofevent<<endl;
 	cout<<"Maxsweeps = "<<Maxsweeps<<"\t"<<"Time:  "<<Maxsweeps/40<<" [s]"<<endl;
 
@@ -5224,13 +5224,13 @@ void UnbinnedFit(TF1* func_handle,string _treename, TH1D* outhisto, double _fitL
 			selected_s = Form("time >=%.4f && time<=%.4f",_fitL,_fitR);
 			intree->Draw("time",selected_s.c_str(),"goff");
 			_intof = intree->GetV1();
-			Numdata = intree->GetSelectedRows();
+			Numdata = intree->GetSelectedRows() % intree->GetEstimate();
 		}
 		else{
 			selected_s = Form("timec >=%.4f && timec<=%.4f",_fitL,_fitR);
 			intree->Draw("timec",selected_s.c_str(),"goff");
 			_intof = intree->GetV1();
-			Numdata = intree->GetSelectedRows();
+			Numdata = intree->GetSelectedRows() % intree->GetEstimate();
 
 		}
 	}
