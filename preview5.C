@@ -4747,8 +4747,16 @@ void FindBetaTof_Coin(double tof_L, double tof_R, Long64_t _Halflife){
 				}// loop for mrtof multihit in a single sweep
 		}//loop all event in mrtof
 
+
+		/*tbeta_tof->Write();	
+		//delete tbeta_tof;	
+		f_beta_tof_tree->Close(); delete f_beta_tof_tree;
+		f_beta_tof_tree = new TFile(f_beta_tof_tem.c_str(),"UPDATE");
+		tbeta_tof = (TTree*)f_beta_tof_tree->Get("tbeta_tof");*/
+
 		c1->cd(2)->SetEditable(kTRUE);
 		fin->cd();
+		
 		if(tbeta_tof->GetEntriesFast()>0){
 				 tbeta_tof->Draw("time_mr>>h_zoom_x");   // this kind of draw must switch back to the file where the histogram locates
 				 active_tree_name = "tbeta_tof";
@@ -4812,10 +4820,11 @@ void FindBetaTof_Coin(double tof_L, double tof_R, Long64_t _Halflife){
 		f_beta_tof_tree->cd();
 		tbeta_tof->Write();
 		h_beta_decay->Write();
-		f_beta_tof_tree->Write();
+	//	f_beta_tof_tree->Write();
 
 		intree->ResetBranchAddresses();            // Very important, variables address linked to tree CAN NOT be delete or destroy untill is deleted or 
 		tbeta_tof->ResetBranchAddresses();		// reset !!!!!!!!!!!!!!!!!!!!!!!!
+	
 	//	delete mr_time;
 	//	delete mr_sweeps_global;
 	//	delete mr_tag;
@@ -5688,6 +5697,7 @@ void GenerateRejectList(TTree* inRawTree = NULL, TCutG** _usecut=NULL, Rejection
 
 	string command_coindtion = CutCondition(_usecut);
 
+	f_beta_tof_tree->cd();
 	TTree* inRawTree_copy = inRawTree->CopyTree(command_coindtion.c_str());
 
 	//cout<<"netry = "<<inRawTree_copy->GetEntriesFast()<<endl;
@@ -5738,6 +5748,8 @@ void GenerateRejectList(TTree* inRawTree = NULL, TCutG** _usecut=NULL, Rejection
 
 	inRawTree_copy->ResetBranchAddresses();
 	delete inRawTree_copy;
+
+	fin->cd();
 
 }
 
